@@ -7,7 +7,9 @@ CREATE TABLE IF NOT EXISTS Users (
     password VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    phoneNumber INT NOT NULL
+    verifiedPhone BOOLEAN NOT NULL DEFAULT false, 
+    verifiedEmail BOOLEAN NOT NULL DEFAULT false, 
+    phoneNumber VARCHAR(10) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Contacts (

@@ -1,9 +1,9 @@
 import express from "express";
-import { getChallenge, loginReg } from "../controllers/loginController.js";
+import { magicPin, phonePin} from "../controllers/loginController.js";
 
 const LoginRouter = express.Router();
 
-LoginRouter.post("/", loginReg);
-LoginRouter.get("/challenge", getChallenge);
+LoginRouter.post("/email", magicPin);
+LoginRouter.get("/phone", phonePin);
 
 export default LoginRouter;

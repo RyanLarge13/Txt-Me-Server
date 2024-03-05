@@ -13,7 +13,7 @@ const initDb = async () => {
     const data = await client.query(queries);
     console.log("Query Executed");
     console.log(data);
-    client.release();
+    client.end();
   } catch (err) {
     console.log(err);
   } finally {
