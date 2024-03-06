@@ -81,7 +81,7 @@ export const signUpReg = async (req, res) => {
             "We cannot create a new account at this moment. More than likely there is an important security update on our servers right now. Please try to create a new account later and if the issue persists, contact the developer at"
           );
         }
-        ResHdlr.sucCreate(
+        return ResHdlr.sucCreate(
           res,
           "We successfully created your new account. Follow up by confirming your phone number! Welcome to Txt Me",
           newUser.rows[0]
