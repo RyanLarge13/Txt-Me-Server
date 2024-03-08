@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS Users (
     verifiedPhone BOOLEAN NOT NULL DEFAULT false, 
     verifiedEmail BOOLEAN NOT NULL DEFAULT false, 
     phoneNumber VARCHAR(10) NOT NULL
+    passcode VARCHAR(6),
+    passExpiresAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    passUsed BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS Contacts (

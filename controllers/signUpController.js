@@ -1,7 +1,9 @@
 import Valdtr from "../utils/Validator.js";
 import ResHdlr from "../utils/ResponseHandler.js";
 import client from "../utils/client.js";
-import { hashPass } from "../utils/helpers.js";
+import sendVerifyTxt from "../utils/vonage.js";
+import { hashPass, genRandomCode, getDateInFuture } from "../utils/helpers.js";
+import signToken from "../middleware/signToken.js";
 
 export const signUpReg = async (req, res) => {
  const { username, email, password, phone } = req.body.newUser;
@@ -66,14 +68,25 @@ export const signUpReg = async (req, res) => {
    }
    const hashedPass = await hashPass(password);
    const formattedPhoneNum = phone.replace(/[()-]/g, "");
+   const passcodeForVerification = genRandomCode();
+   const expireDate = getDateInFuture(5);
    try {
     const newUser = await client.query(
      `
-    INSERT INTO Users(username, email, password, phoneNumber)
-    VALUES($1, $2, $3, $4)
+    INSERT INTO Users(username, email, password, phoneNumber, passcode,
+    passExpiresAt, passUsed)
+    VALUES($1, $2, $3, $4, $5, $6, $7)
     RETURNING *;
     `,
-     [username, email, hashedPass, formattedPhoneNum]
+     [
+      username,
+      email,
+      hashedPass,
+      formattedPhoneNum,
+      passcodeForVerification,
+      expireDate,
+      false
+     ]
     );
     if (newUser.rows.length < 1) {
      return ResHdlr.srvErr(
@@ -81,10 +94,22 @@ export const signUpReg = async (req, res) => {
       "We cannot create a new account at this moment. More than likely there is an important security update on our servers right now. Please try to create a new account later and if the issue persists, contact the developer at"
      );
     }
+    const dbUser = newUser.rows[0];
+    const token = signToken({
+     username: dbUser.username,
+     email: dbUser.email,
+     phoneNumber: dbUser.phonenumber,
+     userId: dbUser.userid
+    });
+    const txtSentRes = await sendVerifyTxt(
+     "+1" + formattedPhoneNum,
+     passcodeForVerification
+    );
+    console.log(txtSentRes);
     return ResHdlr.sucCreate(
      res,
-     "We successfully created your new account. Follow up by confirming your phone number! Welcome to Txt Me",
-     newUser.rows[0]
+     "We successfully created your new account. Follow up by confirming your phone number! Welcome to Txt Me, you will receive a text message shortly",
+     { newUser: newUser.rows[0], token: token }
     );
    } catch (err) {
     return ResHdlr.qryErr(res, err);

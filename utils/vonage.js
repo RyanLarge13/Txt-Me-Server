@@ -9,11 +9,14 @@ const vonageClient = new Vonage({
  apiSecret: process.env.VONAGE_API_SECRET
 });
 
-const sendVerifyTxt = async number => {
+const sendVerifyTxt = async (number, code) => {
  try {
   const res = await vonageClient.verify.start({
    number,
-   brand: "Txt Me"
+   brand: "Txt Me",
+   code_length: 6,
+   pin_expiry: 300,
+   code: code
   });
   return res;
  } catch (err) {

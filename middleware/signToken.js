@@ -1,11 +1,9 @@
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
 
 const signToken = user => {
- const token = jwt.sign(user, process.env.JWT_SECRET, {
-  expiresIn: "1h",
-  algorithm: "RSA",
-  issuer: "txt me"
- });
+ const token = jwt.sign(user, process.env.JWT_SECRET);
  return token;
 };
 

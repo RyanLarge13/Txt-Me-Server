@@ -1,11 +1,10 @@
 import express from "express";
+import auth from "../middleware/authenticateToken.js";
+import { verifyPhoneCode } from "../controllers/verifyController.js";
 
 const VerifyRouter = express.Router();
 
-VerifyRouter.get("/verify/phone");
-VerifyRouter.post("/verify/phone");
-VerifyRouter.get("/verify/email");
-VerifyRouter.post("/verify/email");
+VerifyRouter.post("/phone", auth, verifyPhoneCode);
+VerifyRouter.post("/email");
 
 export default VerifyRouter;
-

@@ -5,6 +5,7 @@ import WebSocket, { WebSocketServer } from "ws";
 import Redis from "ioredis";
 import SignUpRouter from "./routes/signUpRouter.js";
 import LoginRouter from "./routes/loginRouter.js";
+import VerifyRouter from "./routes/verifyRouter.js"
 import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
@@ -18,6 +19,7 @@ app.use(cors());
 app.use(parser.json({ urlencoded: true }));
 app.use("/signup", SignUpRouter);
 app.use("/login", LoginRouter);
+app.use("/verify", VerifyRouter)
 
 wws.on("connection", (socket) => {
   console.log(socket);
