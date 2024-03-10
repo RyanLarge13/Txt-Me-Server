@@ -25,3 +25,8 @@ export const getDateInFuture = (minutes) => {
   return futureDate;
 }
 
+export const hoursMinutesInFuture = (minutes) => {
+const futureTime = new Date(Date.now() + minutes * 60000);
+const timeString = futureTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+return timeString
+}

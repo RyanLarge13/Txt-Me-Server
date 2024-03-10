@@ -1,3 +1,7 @@
+export const fetchUserData = async (req, res) => {
+ 
+}
+
 export const magicPin = (req, res) => {
  
 }

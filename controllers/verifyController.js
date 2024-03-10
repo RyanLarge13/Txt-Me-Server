@@ -85,3 +85,7 @@ export const verifyPhoneCode = async (req, res) => {
     return ResHdlr.conErr(res, err, "Verying phone number");
   }
 };
+
+export const verifyEmailCode = (req, res) => {
+ 
+}

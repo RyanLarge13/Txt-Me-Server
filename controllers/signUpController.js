@@ -1,9 +1,10 @@
 import Valdtr from "../utils/Validator.js";
 import ResHdlr from "../utils/ResponseHandler.js";
+import Mailer from "../utils/Mailer.js";
 import client from "../utils/client.js";
 import sendVerifyTxt from "../utils/twilio.js";
-import { hashPass, genRandomCode, getDateInFuture } from "../utils/helpers.js";
 import signToken from "../middleware/signToken.js";
+import { hashPass, genRandomCode, getDateInFuture, hoursMinutesInFuture} from "../utils/helpers.js";
 
 export const signUpReg = async (req, res) => {
  const { username, email, password, phone } = req.body.newUser;
@@ -68,7 +69,8 @@ export const signUpReg = async (req, res) => {
    }
    const hashedPass = await hashPass(password);
    const formattedPhoneNum = phone.replace(/[()-]/g, "");
-   const passcodeForVerification = genRandomCode();
+   const passcodeForPhoneVerification = genRandomCode();
+   const passcodeForEmailVerification = genRandomCode();
    const expireDate = getDateInFuture(5);
    const existingPhone = await clntCon.query(
     `
@@ -99,7 +101,7 @@ export const signUpReg = async (req, res) => {
       email,
       hashedPass,
       formattedPhoneNum,
-      passcodeForVerification,
+      passcodeForPhoneVerification,
       expireDate,
       false
      ]
@@ -119,8 +121,19 @@ export const signUpReg = async (req, res) => {
     });
     const txtSentRes = await sendVerifyTxt(
      "+1" + formattedPhoneNum,
-     passcodeForVerification
+     passcodeForPhoneVerification
     );
+    const mailer = new Mailer(
+     "verifyEmail.js",
+     [
+      { name: "user", string: username },
+      { name: "otp", string: passcodeForEmailVerification },
+      { name: "timeLimit", string: "5" }, 
+      { name: "date", string: hoursMinutesInFuture() }
+     ],
+     email
+    );
+    mailer.sendEmail("Verify Your Email");
     console.log(txtSentRes);
     return ResHdlr.sucCreate(
      res,
