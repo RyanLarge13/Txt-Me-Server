@@ -151,5 +151,4 @@ export const signUpReg = async (req, res) => {
   client.end();
   return ResHdlr.conErr(res, err, "Sign up");
  }
- const securePassword = hashPass(password);
 };
