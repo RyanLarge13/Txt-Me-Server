@@ -1,10 +1,15 @@
 import Valdtr from "../utils/Validator.js";
 import ResHdlr from "../utils/ResponseHandler.js";
-import Mailer from "../utils/Mailer.js";
+import Mailer from "../utils/Mailer.mjs";
 import client from "../utils/client.js";
 import sendVerifyTxt from "../utils/twilio.js";
 import signToken from "../middleware/signToken.js";
-import { hashPass, genRandomCode, getDateInFuture, hoursMinutesInFuture} from "../utils/helpers.js";
+import {
+ hashPass,
+ genRandomCode,
+ getDateInFuture,
+ hoursMinutesInFuture
+} from "../utils/helpers.js";
 
 export const signUpReg = async (req, res) => {
  const { username, email, password, phone } = req.body.newUser;
@@ -72,11 +77,11 @@ export const signUpReg = async (req, res) => {
    const passcodeForPhoneVerification = genRandomCode();
    const passcodeForEmailVerification = genRandomCode();
    const expireDate = getDateInFuture(5);
+   const expireDateEmail = getDateInFuture(10);
    const existingPhone = await clntCon.query(
     `
    SELECT * FROM Users
-   WHERE phoneNumber = $1
-   RETURNING*;
+   WHERE phoneNumber = $1;
    `,
     [formattedPhoneNum]
    );
@@ -92,8 +97,8 @@ export const signUpReg = async (req, res) => {
     const newUser = await client.query(
      `
     INSERT INTO Users(username, email, password, phoneNumber, passcode,
-    passExpiresAt, passUsed)
-    VALUES($1, $2, $3, $4, $5, $6, $7)
+    passExpiresAt, passused, passemailcode, passEmailExpiresAt, passemailused)
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     RETURNING *;
     `,
      [
@@ -103,6 +108,9 @@ export const signUpReg = async (req, res) => {
       formattedPhoneNum,
       passcodeForPhoneVerification,
       expireDate,
+      false,
+      passcodeForEmailVerification,
+      expireDateEmail,
       false
      ]
     );
@@ -124,12 +132,12 @@ export const signUpReg = async (req, res) => {
      passcodeForPhoneVerification
     );
     const mailer = new Mailer(
-     "verifyEmail.js",
+     "verifyEmail.html",
      [
       { name: "user", string: username },
       { name: "otp", string: passcodeForEmailVerification },
-      { name: "timeLimit", string: "5" }, 
-      { name: "date", string: hoursMinutesInFuture() }
+      { name: "timeLimit", string: "10" },
+      { name: "date", string: hoursMinutesInFuture(10) }
      ],
      email
     );
@@ -144,10 +152,12 @@ export const signUpReg = async (req, res) => {
     return ResHdlr.qryErr(res, err);
    }
   } catch (err) {
+   console.log(err);
    client.end();
    return ResHdlr.qryErr(res, err);
   }
  } catch (err) {
+  console.log(err);
   client.end();
   return ResHdlr.conErr(res, err, "Sign up");
  }
