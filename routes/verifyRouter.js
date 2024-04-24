@@ -11,7 +11,7 @@ const VerifyRouter = express.Router();
 
 VerifyRouter.post("/phone", auth, verifyPhoneCode);
 VerifyRouter.post("/email", auth, verifyEmailCode);
-VerifyRouter.post("/phone/newpin", newPinePhone);
+VerifyRouter.post("/phone/newpin", newPinPhone);
 VerifyRouter.post("/email/newpin", newPinEmail);
 
 export default VerifyRouter;

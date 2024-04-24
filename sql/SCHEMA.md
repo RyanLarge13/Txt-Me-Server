@@ -12,7 +12,10 @@ CREATE TABLE IF NOT EXISTS Users (
     phoneNumber VARCHAR(10) NOT NULL
     passcode VARCHAR(6),
     passExpiresAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-    passUsed BOOLEAN
+    passUsed BOOLEAN, 
+    passemailcode VARCHAR(6), 
+    passEmailExpiresAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    passEmailUsed BOOLEAN; 
 );
 
 CREATE TABLE IF NOT EXISTS Contacts (

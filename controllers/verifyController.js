@@ -2,6 +2,12 @@ import ResHdlr from "../utils/ResponseHandler.js";
 import Valdtr from "../utils/Validator.js";
 import Mailer from "../utils/Mailer.mjs";
 import client from "../utils/client.js";
+import signToken from "../middleware/signToken.js";
+import {
+ genRandomCode,
+ getDateInFuture,
+ hoursMinutesInFuture
+} from "../utils/helpers.js";
 
 const setPhoneVerified = async (res, user, clntCon) => {
  if (user.verifiedphone) {
@@ -49,10 +55,163 @@ const setEmailVerified = async (res, user, clntCon) => {
  }
 };
 
+export const verifyPinEmail = async (req, res) => {
+ const email = req.body.email;
+ const pin = req.body.pin;
+ if (!email) {
+  ResHdlr.badReq(res, "Please request another pin and retry your login");
+ }
+ if (!pin) {
+  ResHdlr.badReq(
+   res,
+   "Please provide the 6 digit pin sent to your personal email."
+  );
+ }
+ if (!Valdtr.valEmail(email)) {
+  return ResHdlr.badReq(res, "Please provide a valid email to login.");
+ }
+ if (!Valdtr.valPin(pin)) {
+  return ResHdlr.badReq(
+   res,
+   "Please provide a valid pin sent to your email for login. This will be a 6 digit randomized pin code."
+  );
+ }
+ try {
+  const clntCon = await client.connect();
+  try {
+   const userExists = clntCon.query(`
+     SELECT * FROM users 
+     WHERE email = $1;
+   `);
+   if (userExists.rows.length < 1) {
+    return ResHdlr.badReq(
+     res,
+     "Please provide your valid email or, if you have not signed up for a new account, please create a new one."
+    );
+   }
+   const { passemailcode, passemailused, passemailexpiresat } =
+    userExists.rows[0];
+   if (passemailused) {
+    return ResHdlr.badReq(
+     res,
+     "Please request a new pin before attempting to login"
+    );
+   }
+   if (new Date(passemailexpiresat) < new Date()) {
+    return ResHdlr.badReq(
+     res,
+     "The Passcode you previously requested is now expired for your security. Please request a new pin for authentication"
+    );
+   }
+   if (passemailcode !== pin) {
+    return ResHdlr.badReq(
+     res,
+     "The pin you entered is incorrect. Make sure you input the exact pin shown in your email"
+    );
+   }
+   const dbUser = userExists.rows[0];
+   const token = signToken({
+    username: dbUser.username,
+    email: dbUser.email,
+    phoneNumber: dbUser.phonenumber,
+    userId: dbUser.userid
+   });
+   return ResHdlr.sucRes(res, "You have successfully logged in", {
+    newUser: newUser.rows[0],
+    token: token
+   });
+  } catch (err) {
+   console.log(err);
+   ResHdlr.qryErr(
+    res,
+    "We cannot connect to your area right now. We are terribly sorry. If the error persists please contact the developer at ryanlarge@ryanlarge.dev"
+   );
+  }
+ } catch (err) {
+  console.log(err);
+  return ResHdlr.conErr(res, err, "Verify pin login");
+ }
+};
+
+export const verifyPinPhone = async (req, res) => {
+ const { phone, pin } = req.body;
+ if (!phone) {
+  return ResHdlr.badReq(
+   res,
+   "You must provide a phone number so we know who you are"
+  );
+ }
+ if (!pin) {
+  return ResHdlr.badReq(
+   res,
+   "You must provide a pin to login to your account."
+  );
+ }
+ if (!Valdtr.valPin(pin)) {
+  return ResHdlr.badReq(
+   res,
+   "Please provide a valid pin. Check your phone for a new 6 digit pin"
+  );
+ }
+ try {
+  const clntCon = await client.connect();
+  try {
+   const userExists = await clntCon.query(`
+     SELECT * FROM users 
+     WHERE phoneNumber = $1;
+   `);
+   if (userExists.rows.length < 1) {
+    return ResHdlr.badReq(
+     res,
+     "We do not have record of your phone number in our system, please make sure you input your actual phone number."
+    );
+   }
+   const { passcode, passexpiresat, passused } = userExists.rows[0];
+   if (passused) {
+    return ResHdlr.badReq(
+     res,
+     "Please request a new pin before attempting to login"
+    );
+   }
+   if (new Date(passexpiresat) < new Date()) {
+    return ResHdlr.badReq(
+     res,
+     "This pin has expired. Please request a new pin before attempting to login."
+    );
+   }
+   if (passcode !== pin) {
+    return ResHdlr.badReq(
+     res,
+     "Incorrect pin. Please try again, make sure to check your phone for the latest pin you request."
+    );
+   }
+   const dbUser = userExists.rows[0];
+   const token = signToken({
+    username: dbUser.username,
+    email: dbUser.email,
+    phoneNumber: dbUser.phonenumber,
+    userId: dbUser.userid
+   });
+   return ResHdlr.sucRes(res, "You have successfully logged in", {
+    newUser: newUser.rows[0],
+    token: token
+   });
+  } catch (err) {
+   console.log(err);
+   ResHdlr.qryErr(
+    res,
+    "We cannot connect to your area right now. We are terribly sorry. If the error persists please contact the developer at ryanlarge@ryanlarge.dev"
+   );
+  }
+ } catch (err) {
+  console.log(err);
+  return ResHdlr.conErr(res, err, "Verify pin login");
+ }
+};
+
 export const verifyPhoneCode = async (req, res) => {
  const user = req.user;
  if (!user) {
-  console.log("no req user");
   return ResHdlr.authErr(res, "You are not authorized to access this data");
  }
  const sixDigitPin = req.body.pin;
@@ -192,22 +351,54 @@ export const verifyEmailCode = async (req, res) => {
 export const newPinEmail = async (req, res) => {
  const email = req.body;
  if (!email) {
-  return ResHdlr.badReq(res, "");
+  return ResHdlr.badReq(res, "Please provide a valid email");
  }
  try {
   const clntCon = await client.connect();
   try {
-   const userExists = await clntCon.query(`
+   const userExists = await clntCon.query(
+    `
      SELECT * FROM users 
      WHERE email = $1;
-   `);
+   `,
+    [email]
+   );
    if (userExists.rows.length < 1) {
     return ResHdlr.badReq(
      res,
      "We do not have record of you in our system. Please sign up for an account first."
     );
    }
-   
+   const newPin = genRandomCode();
+   const expiresat = getDateInFuture(5);
+   const updatedUser = await clntCon.query(
+    ` UPDATE Users
+      SET passemailcode = $1, 
+      passemailexpiresat = $2, 
+      passemailused = $3, 
+      RETURNING *;
+   `,
+    [newPin, expiresat, false]
+   );
+   if (updatedUser.rows.length < 1) {
+    return ResHdlr.srvErr(
+     res,
+     "We could not verify you via email. Please try a different method at this time. If the issue persists, contact the developer at ryanlarge@ryanlarge.dev"
+    );
+   }
+   const newUser = updatedUser.rows[0];
+   const mailer = new Mailer(
+    "verifyEmail.html",
+    [
+     { name: "user", string: newUser.username },
+     { name: "otp", string: newPin },
+     { name: "timeLimit", string: "5" },
+     { name: "date", string: hoursMinutesInFuture(5) }
+    ],
+    email
+   );
+   mailer.sendEmail("Login Via Email");
+   return ResHdlr.sucRes(res, "A one time pass-code was sent to your email.");
   } catch (err) {
    console.log(err);
    ResHdlr.qryErr(
@@ -221,4 +412,57 @@ export const newPinEmail = async (req, res) => {
  }
 };
 
-export const newPinPhone = async (req, res) => {};
+export const newPinPhone = async (req, res) => {
+ const phone = req.body;
+ if (!phone) {
+  return ResHdlr.badReq(res, "Please provide a valid phone number");
+ }
+ try {
+  const clntCon = await client.connect();
+  try {
+   const userExists = await clntCon.query(
+    `
+     SELECT * FROM users 
+     WHERE phoneNumber = $1;
+   `,
+    [phone]
+   );
+   if (userExists.rows.length < 1) {
+    return ResHdlr.badReq(
+     res,
+     "We do not have record of you in our system. Please sign up for an account first."
+    );
+   }
+   const newPin = genRandomCode();
+   const expiresat = getDateInFuture(5);
+   const updatedUser = await clntCon.query(
+    ` UPDATE Users
+      SET passcode = $1, 
+      passexpiresat = $2, 
+      passused = $3, 
+      RETURNING *;
+   `,
+    [newPin, expiresat, false]
+   );
+   if (updatedUser.rows.length < 1) {
+    return ResHdlr.srvErr(
+     res,
+     "We could not verify you via phone. Please try a different method at this time. If the issue persists, contact the developer at ryanlarge@ryanlarge.dev"
+    );
+   }
+   const newUser = updatedUser.rows[0];
+   const formattedPhoneNum = phone.replace(/[()-]/g, "");
+   const txtSentRes = await sendVerifyTxt("+1" + formattedPhoneNum, newPin);
+   return ResHdlr.sucRes(res, "A one time pass-code was sent to your phone.");
+  } catch (err) {
+   console.log(err);
+   ResHdlr.qryErr(
+    res,
+    "We cannot connect to your area right now. We are terribly sorry. If the error persists please contact the developer at"
+   );
+  }
+ } catch (err) {
+  console.log(err);
+  return ResHdlr.conErr(res, err, "New Email Pin");
+ }
+};
