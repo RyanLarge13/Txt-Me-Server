@@ -21,7 +21,7 @@ app.use(parser.json({ urlencoded: true }));
 app.use("/signup", SignUpRouter);
 app.use("/login", LoginRouter);
 app.use("/verify", VerifyRouter);
-app.use("/message", MessageController);
+//app.use("/message", MessageController);
 
 wws.on("connection", (socket) => {
   console.log(socket);

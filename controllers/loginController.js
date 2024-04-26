@@ -2,7 +2,13 @@ import ResHdlr from "../utils/ResponseHandler.js";
 import Valdtr from "../utils/Validator.js";
 import client from "../utils/client.js";
 
-export const fetchUserData = async (req, res) => {};
+export const fetchUserData = async (req, res) => {
+ const user = req.user;
+ if (!user) {
+  ResHdlr.authErr(res, "Please login before using the app");
+ }
+ 
+};
 
 export const magicPin = async (req, res) => {
  const email = req.body.email;
@@ -12,7 +18,6 @@ export const magicPin = async (req, res) => {
  try {
   const clientCon = await client.connect();
   try {
-   
   } catch (err) {
    console.log(err);
    clientCon.end();

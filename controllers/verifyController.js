@@ -349,7 +349,7 @@ export const verifyEmailCode = async (req, res) => {
 };
 
 export const newPinEmail = async (req, res) => {
- const email = req.body;
+ const { email } = req.body;
  if (!email) {
   return ResHdlr.badReq(res, "Please provide a valid email");
  }
@@ -375,7 +375,7 @@ export const newPinEmail = async (req, res) => {
     ` UPDATE Users
       SET passemailcode = $1, 
       passemailexpiresat = $2, 
-      passemailused = $3, 
+      passemailused = $3
       RETURNING *;
    `,
     [newPin, expiresat, false]
