@@ -14,7 +14,10 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 const wws = new WebSocketServer({ server });
-// const redis = new Redis();
+const redisClient = new Redis();
+const redisSubscriber = new Redis();
+
+const clients = new Map();
 
 app.use(cors());
 app.use(parser.json({ urlencoded: true }));
@@ -23,17 +26,48 @@ app.use("/login", LoginRouter);
 app.use("/verify", VerifyRouter);
 //app.use("/message", MessageController);
 
-wws.on("connection", (socket) => {
-  console.log(socket);
-  socket.on("error", (err) => {
+const addNewClient = (userId, socket) => {
+  clients.set(userId, socket);
+};
+
+const removeClient = (userId) => {
+  clients.delete(userId);
+};
+
+const getClient = (userId) => {
+  clients.get(userId);
+};
+
+redisSubscriber.subscribe("user:*", (err, count) => {
+  if (err) {
     console.log(err);
-  });
-  socket.on("message", (data) => {
-    console.log(data.toString("utf-8"));
-  });
-  socket.on("close", () => {
-    console.log("closing");
-  });
+  }
+});
+
+redisSubscriber.on("message", async (channel, message) => {
+  const userId = channel.split(":")[1];
+  const socketId = await getClient(userId);
+  if (socketId) {
+    const socket = wws.clients.get(socketId);
+    if (socket) {
+      socket.send(message);
+    }
+  }
+});
+
+wws.on("connection", (socket) => {
+  const userId = req.params.userId;
+  if (userId) {
+    addNewClient(userId, socket);
+    socket.on("close", () => removeClient(userId));
+    socket.on("message", (data) => {
+      const { recipientId: recipientId, text } = JSON.parse(data);
+      const message = JSON.stringify({ senderId: userId, text });
+      redisClient.publish(`user:${recipientId}`, message);
+    });
+  } else {
+    socket.close();
+  }
 });
 
 server.listen(8080, () => {
