@@ -11,6 +11,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
 
+const PORT = 8080;
 const app = express();
 const server = http.createServer(app);
 const wws = new WebSocketServer({ server });
@@ -70,6 +71,6 @@ wws.on("connection", (socket) => {
   }
 });
 
-server.listen(8080, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log("Server running on port 8080");
 });
