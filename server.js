@@ -57,6 +57,7 @@ const getClient = (userId) => {
 
 const io = new Server(server, {
   cors: {
+    origin: process.env.CORS_ORIGIN,
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: false,
