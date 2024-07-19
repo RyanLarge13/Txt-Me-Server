@@ -27,15 +27,15 @@ app.use("/verify", VerifyRouter);
 //app.use("/message", MessageController);
 
 const addNewClient = (userId, socket) => {
- clients.set(userId, socket);
+  clients.set(userId, socket);
 };
 
-const removeClient = userId => {
- clients.delete(userId);
+const removeClient = (userId) => {
+  clients.delete(userId);
 };
 
-const getClient = userId => {
- clients.get(userId);
+const getClient = (userId) => {
+  clients.get(userId);
 };
 
 /*redisSubscriber.subscribe("user:*", (err, count) => {
@@ -56,17 +56,21 @@ const getClient = userId => {
 });*/
 
 const io = new Server(server, {
- cors: { origin: "http://localhost:5173" }
+  cors: {
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+    credentials: false,
+  },
 });
 
-io.on("connection", socket => {
- console.log("New Connection");
+io.on("connection", (socket) => {
+  console.log("New Connection");
 });
 
 io.on("message", (event) => {
- console.log(event);
+  console.log(event);
 });
 
 server.listen(PORT, "0.0.0.0", () => {
- console.log("Server running on port 8080");
+  console.log("Server running on port 8080");
 });
