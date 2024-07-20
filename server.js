@@ -5,6 +5,7 @@ import parser from "body-parser";
 import SignUpRouter from "./routes/signUpRouter.js";
 import LoginRouter from "./routes/loginRouter.js";
 import VerifyRouter from "./routes/verifyRouter.js";
+import UserRouter from "./routes/userRouter.js"
 import { Server } from "socket.io";
 // import MessageController from "./routes/messageController.js";
 import cors from "cors";
@@ -24,6 +25,7 @@ app.use(parser.json({ urlencoded: true }));
 app.use("/signup", SignUpRouter);
 app.use("/login", LoginRouter);
 app.use("/verify", VerifyRouter);
+app.use("/user", UserRouter);
 //app.use("/message", MessageController);
 
 const addNewClient = (userId, socket) => {

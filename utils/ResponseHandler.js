@@ -19,7 +19,7 @@ class ResponseHandler {
  }
  conErr(res, err, controllerMethod) {
   console.error(
-   `Error with pool connection when calling userController.${controllerMethod}: ${err}`
+   `Error with pool connection when calling ${controllerMethod}: ${err}`
   );
   return this.srvErr(
    res,
