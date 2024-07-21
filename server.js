@@ -5,7 +5,7 @@ import parser from "body-parser";
 import SignUpRouter from "./routes/signUpRouter.js";
 import LoginRouter from "./routes/loginRouter.js";
 import VerifyRouter from "./routes/verifyRouter.js";
-import UserRouter from "./routes/userRouter.js"
+import UserRouter from "./routes/userRouter.js";
 import { Server } from "socket.io";
 // import MessageController from "./routes/messageController.js";
 import cors from "cors";
@@ -61,17 +61,20 @@ const io = new Server(server, {
   cors: {
     origin: process.env.CORS_ORIGIN,
     methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type"],
-    credentials: false,
+    // allowedHeaders: ["Content-Type"],
+    // credentials: false,
   },
 });
 
 io.on("connection", (socket) => {
   console.log("New Connection");
-});
-
-io.on("message", (event) => {
-  console.log(event);
+  socket.on("text-message", (message) => {
+    console.log(message);
+    socket.broadcast.emit("text-message", message);
+  });
+  socket.on("disconnect", () => {
+    console.log("A client disconnected");
+  });
 });
 
 server.listen(PORT, "0.0.0.0", () => {
