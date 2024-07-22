@@ -67,13 +67,24 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
+  const number = socket.handshake.query.number;
   console.log("New Connection");
-  socket.on("text-message", (message) => {
-    console.log(message);
-    socket.broadcast.emit("text-message", message);
+  if (!clients.has(number)) {
+    clients.set(number, socket.id);
+  }
+  socket.on("text-message", (clientMessage) => {
+    console.log(clientMessage);
+    const { recipient, message } = clientMessage;
+    const clientToSendTo = clients.get(recipient);
+    if (clientToSendTo) {
+      console.log("client to send to");
+      io.to(clientToSendTo).emit("text-message", { message });
+    }
   });
-  socket.on("disconnect", () => {
+  socket.on("disconnect", (client) => {
     console.log("A client disconnected");
+    console.log(client);
+    clients.delete(client.id);
   });
 });
 

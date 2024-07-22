@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS Users (
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     verifiedPhone BOOLEAN NOT NULL DEFAULT false,
     verifiedEmail BOOLEAN NOT NULL DEFAULT false,
-    phoneNumber VARCHAR(10) NOT NULL
+    phoneNumber VARCHAR(15) NOT NULL UNIQUE
     passcode VARCHAR(6),
     passExpiresAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     passUsed BOOLEAN,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS Contacts (
     contactId SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
-    number INT NOT NULL,
+    number VARCHAR(15) NOT NuLL UNIQUE,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     space VARCHAR(255) DEFAULT 'primary',
     nickname VARCHAR(255),
@@ -48,6 +48,10 @@ CREATE TABLE IF NOT EXISTS Messages (
     readAt TIMESTAMP,
     fromId INT NOT NULL,
     toId INT NOT NULL,
+    fromNumber VARCHAR(15) NOT NULL,
+    toNumber VARCHAR(15) NOT NULL,
+    FOREIGN KEY (fromNumber) REFERENCES Users(phoneNumber),
+    FOREIGN KEY (toNumber) REFERENCES Users(phoneNumber),
 	FOREIGN KEY (fromId) REFERENCES Users(userId),
     FOREIGN KEY (toId) REFERENCES Users(userId)
 );
