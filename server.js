@@ -74,11 +74,14 @@ io.on("connection", (socket) => {
   }
   socket.on("text-message", (clientMessage) => {
     console.log(clientMessage);
-    const { recipient, message } = clientMessage;
+    const { sender, recipient, message } = clientMessage;
     const clientToSendTo = clients.get(recipient);
     if (clientToSendTo) {
       console.log("client to send to");
-      io.to(clientToSendTo).emit("text-message", { message });
+      io.to(clientToSendTo).emit("text-message", {
+        from: sender,
+        message: message,
+      });
     }
   });
   socket.on("disconnect", (client) => {
