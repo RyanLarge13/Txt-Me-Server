@@ -160,5 +160,7 @@ export const signUpReg = async (req, res) => {
     console.log(err);
     client.end();
     return ResHdlr.conErr(res, err, "Sign up");
+  } finally {
+    client.release();
   }
 };
