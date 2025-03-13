@@ -18,18 +18,17 @@ class Validator {
     if (typeof string !== "string") {
       return false;
     }
-    console.log(string);
-    console.log("is str");
+
     const stringLength = string.length;
     if (stringLength < minLength || stringLength > maxLength) {
       return false;
     }
-    console.log("str is right len");
+
     const nonDangerousPatterns = customRegex.test(string);
     if (!nonDangerousPatterns) {
       return false;
     }
-    console.log("no dngr pattern");
+
     string.replace(
       new RegExp(`[${Object.keys(customEscapeMap).join("")}]`),
       (match) => customEscapeMap[match]
@@ -105,7 +104,6 @@ class Validator {
   }
 
   valPhoneNumber(phoneNumber) {
-    console.log(phoneNumber);
     if (typeof phoneNumber !== "string") {
       return false;
     }
