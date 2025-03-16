@@ -46,13 +46,22 @@ io.on("connection", (socket) => {
       console.log("No message sent from client");
     }
 
-    const clientToSendTo = clients.get(recipient);
+    const clientToSendTo = clients.get(clientMessage.tonumber);
     // Validate the client message
     // Check for back html, etc...
     // Check for bad information that should not be there
 
     if (clientToSendTo) {
-      io.to(clientToSendTo).emit("text-message", clientMessage);
+      console.log(clientToSendTo);
+      console.log("Sending to frontend");
+      try {
+        io.to(clientToSendTo).emit("text-message", clientMessage);
+        console.log("Message to front end sent");
+      } catch (err) {
+        console.log(
+          `Error emitting socket message from the server to client. Error: ${err}`
+        );
+      }
       // Send message to DB
     } else {
       // Send error back to sender

@@ -64,7 +64,7 @@ export const getConversationByUser = async (req, res) => {
   if (!user) {
     return ResHdlr.authErr(res, "We could not access your messages");
   }
-  if (!otherUser) {
+  if (!otherUserId) {
     return ResHdlr.authErr(res, "You have no messages to or from this person");
   }
   try {
@@ -87,5 +87,21 @@ export const getConversationByUser = async (req, res) => {
   } catch (err) {
     console.log(err);
     return ResHdlr.conErr(res, err, "getAllContacts");
+  }
+};
+
+export const getAllUserData = async (req, res) => {
+  const user = req.user;
+  if (!user) {
+    return ResHdlr.authErr(
+      res,
+      "You are not authorized to access this information"
+    );
+  }
+  try {
+    // Grab all the data you need after connecting to client. Don't forget to add the client here
+  } catch (err) {
+    console.log(err);
+    return ResHdlr.conErr(res, err, "getAllUserData");
   }
 };
