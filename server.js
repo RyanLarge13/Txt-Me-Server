@@ -6,7 +6,6 @@ import LoginRouter from "./routes/loginRouter.js";
 import VerifyRouter from "./routes/verifyRouter.js";
 import UserRouter from "./routes/userRouter.js";
 import { Server } from "socket.io";
-import { v4 as uuidv4 } from "uuid";
 import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();

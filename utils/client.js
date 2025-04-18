@@ -16,4 +16,8 @@ const client = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
+client.on("error", (err) => {
+  console.log("Client database error: ", err);
+});
+
 export default client;

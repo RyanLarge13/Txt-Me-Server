@@ -6,8 +6,9 @@ export const getAllContacts = async (req, res) => {
   if (!user) {
     return ResHdlr.authErr(res, "We could not access your address book");
   }
+  let clientCon;
   try {
-    const clientCon = await client.connect();
+    clientCon = await client.connect();
     try {
       const allContacts = await clientCon.query(
         `
@@ -27,6 +28,10 @@ export const getAllContacts = async (req, res) => {
   } catch (err) {
     console.log(err);
     return ResHdlr.conErr(res, err, "getAllContacts");
+  } finally {
+    if (clientCon) {
+      clientCon.release();
+    }
   }
 };
 
