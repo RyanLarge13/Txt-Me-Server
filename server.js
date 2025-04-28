@@ -5,10 +5,10 @@ import SignUpRouter from "./routes/signUpRouter.js";
 import LoginRouter from "./routes/loginRouter.js";
 import VerifyRouter from "./routes/verifyRouter.js";
 import UserRouter from "./routes/userRouter.js";
+import MessageRouter from "./routes/messageRouter.js";
 import { Server } from "socket.io";
 import cors from "cors";
 import dotenv from "dotenv";
-import MessageRouter from "./routes/messageRouter.js";
 dotenv.config();
 
 const PORT = process.env.PORT || 8080;
