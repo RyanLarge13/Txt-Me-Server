@@ -29,7 +29,7 @@ export const getMessages = async (req, res) => {
 
       const rows = messages.rows || [];
 
-      ResHdlr.sucRes(res, "Messages successfully fetched", rows);
+      ResHdlr.sucRes(res, "Messages successfully fetched", { messages: rows });
     } catch (err) {
       console.log(`Error calling query inside getMessages. Error: ${err}`);
       ResHdlr.qryErr(res, err);
