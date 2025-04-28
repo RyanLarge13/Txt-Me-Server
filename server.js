@@ -8,6 +8,7 @@ import UserRouter from "./routes/userRouter.js";
 import { Server } from "socket.io";
 import cors from "cors";
 import dotenv from "dotenv";
+import MessageRouter from "./routes/messageRouter.js";
 dotenv.config();
 
 const PORT = process.env.PORT || 8080;
@@ -18,10 +19,14 @@ const clients = new Map();
 
 app.use(cors());
 app.use(parser.json({ urlencoded: true }));
+
+// Routes ---------------------------------------
 app.use("/signup", SignUpRouter);
 app.use("/login", LoginRouter);
 app.use("/verify", VerifyRouter);
 app.use("/user", UserRouter);
+app.use("/messages", MessageRouter);
+// Routes ---------------------------------------
 
 const io = new Server(server, {
   cors: {
