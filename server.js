@@ -39,9 +39,11 @@ io.on("connection", (socket) => {
   const number = socket.handshake.query.number;
   console.log("New Connection");
 
-  if (!clients.has(number)) {
-    clients.set(number, socket.id);
-  }
+  // Do not check if client already exists. Instead create or update always on every connection
+  clients.set(number, socket.id);
+
+  // Set this number a tracking data for when a client goes to disconnect
+  socket.number = number;
 
   socket.on("text-message", (clientMessage) => {
     console.log(clientMessage);
@@ -73,10 +75,9 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("disconnect", (client) => {
-    console.log("A client disconnected");
-    console.log(client);
-    clients.delete(client.id);
+  socket.on("disconnect", () => {
+    console.log(`A client disconnected: ${socket.number}`);
+    clients.delete(socket.number);
   });
 });
 
