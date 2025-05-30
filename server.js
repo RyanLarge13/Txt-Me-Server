@@ -9,6 +9,7 @@ import MessageRouter from "./routes/messageRouter.js";
 import { Server } from "socket.io";
 import cors from "cors";
 import dotenv from "dotenv";
+import client from "./utils/client.js";
 dotenv.config();
 
 const PORT = process.env.PORT || 8080;
@@ -16,6 +17,7 @@ const app = express();
 const server = http.createServer(app);
 
 const clients = new Map();
+const messages = new Map();
 
 app.use(cors());
 app.use(parser.json({ urlencoded: true }));
@@ -35,7 +37,42 @@ const io = new Server(server, {
   },
 });
 
-io.on("connection", (socket) => {
+const InMem_StoreMessage = (clientMessage) => {
+  /*
+ type Message = {
+  messageid: number;
+  message: string;
+  sent: boolean;
+  sentat: Date;
+  delivered: boolean;
+  deliveredat: Date | null;
+  read: boolean;
+  readat: Date | null;
+  fromnumber: string;
+  tonumber: string;
+};
+
+  */
+
+  const to = clientMessage.tonumber;
+  const from = clientMessage.fromnumber;
+
+  const greaterThan = to > from;
+
+  const mapKey = `${greaterThan ? to : from}-${greaterThan ? from : to}`;
+
+  if (!messages.has(mapKey)) {
+    messages.set(mapKey, [clientMessage]);
+  } else {
+    messages.get(mapKey).push(clientMessage);
+  }
+};
+
+const DB_SaveMessages = () => {
+  // Save messages in the database
+};
+
+const Socket_NewConnection = (socket) => {
   const number = socket.handshake.query.number;
   console.log("New Connection");
 
@@ -44,42 +81,52 @@ io.on("connection", (socket) => {
 
   // Set this number a tracking data for when a client goes to disconnect
   socket.number = number;
+  socket.on("text-message", Socket_NewTextMessage);
+  socket.on("disconnect", () => Socket_Disconnect(socket));
+};
 
-  socket.on("text-message", (clientMessage) => {
-    console.log(clientMessage);
+const Socket_NewTextMessage = (clientMessage) => {
+  console.log(clientMessage);
+  if (!clientMessage) {
+    console.log("No message sent from client");
+  }
 
-    if (!clientMessage) {
-      console.log("No message sent from client");
+  const clientToSendTo = clients.get(clientMessage.tonumber);
+
+  // Validate the client message
+  // Check for back html, etc...
+  // Check for bad information that should not be there
+  if (clientToSendTo) {
+    console.log(clientToSendTo);
+    console.log("Sending to frontend");
+    try {
+      io.to(clientToSendTo).emit("text-message", clientMessage);
+      InMem_StoreMessage(clientMessage);
+      console.log("Message to front end sent");
+    } catch (err) {
+      console.log(
+        `Error emitting socket message from the server to client. Error: ${err}`
+      );
     }
+    // Send message to DB
+  } else {
+    // Send error back to sender
+    console.log("no client to send to");
+  }
+};
 
-    const clientToSendTo = clients.get(clientMessage.tonumber);
-    // Validate the client message
-    // Check for back html, etc...
-    // Check for bad information that should not be there
+const Socket_Disconnect = (socket) => {
+  console.log("Client disconnected");
+  clients.delete(socket.number);
+  DB_SaveMessages();
+  /*
+    TODO:
+      IMPLEMENT:
+        1. Remove Client from list?
+  */
+};
 
-    if (clientToSendTo) {
-      console.log(clientToSendTo);
-      console.log("Sending to frontend");
-      try {
-        io.to(clientToSendTo).emit("text-message", clientMessage);
-        console.log("Message to front end sent");
-      } catch (err) {
-        console.log(
-          `Error emitting socket message from the server to client. Error: ${err}`
-        );
-      }
-      // Send message to DB
-    } else {
-      // Send error back to sender
-      console.log("no client to send to");
-    }
-  });
-
-  socket.on("disconnect", () => {
-    console.log(`A client disconnected: ${socket.number}`);
-    clients.delete(socket.number);
-  });
-});
+io.on("connection", Socket_NewConnection);
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log("Server running on port 8080");
