@@ -1,8 +1,11 @@
 import client from "../../utils/client.js";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
-const __filename = new URL(import.meta.url).pathname;
+const __filename = fileURLToPath(import.meta.url);
+// For Linux comment out above code and un-comment out below code
+// const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
 
 const initDb = async () => {
