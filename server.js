@@ -128,6 +128,6 @@ const Socket_Disconnect = (socket) => {
 
 io.on("connection", Socket_NewConnection);
 
-server.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, "0.0.0.0", async () => {
   console.log("Server running on port 8080");
 });

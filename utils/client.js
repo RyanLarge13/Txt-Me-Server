@@ -13,7 +13,6 @@ const client = new Pool({
   database,
   user,
   password,
-  port: 5143,
   ssl: { rejectUnauthorized: false },
 });
 
