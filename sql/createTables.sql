@@ -5,7 +5,7 @@ CREATE TABLE
         password VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        phoneNumber VARCHAR() NOT NULL
+        phoneNumber VARCHAR(255) NOT NULL
     );
 
 CREATE TABLE
