@@ -1,6 +1,90 @@
 import ResHdlr from "../utils/ResponseHandler.js";
 import client from "../utils/client.js";
 
+export const addContact = async (req, res) => {
+  const user = req.user;
+  const { contact } = req.body;
+
+  if (!user) {
+    ResHdlr.authErr(res, "We cannot save this contact until you login");
+    return;
+  }
+
+  if (!contact) {
+    ResHdlr.badReq(res, "Please provide a contact to be saved");
+    return;
+  }
+
+  /*
+    TODO:
+      IMPLEMENT:
+        1. Don't forget to add validation and verification
+  */
+  // if (!varifyContact(contact)) {
+  // return error
+  // }
+
+  let clientCon;
+  try {
+    clientCon = await client.connect();
+
+    try {
+      const newContactInDB = await clientCon.query(
+        `
+          INSERT INTO Contacts(
+            contactId,
+            name,
+            email,
+            number,
+            space,
+            nickname,
+            address,
+            website,
+            avatar,
+            synced,
+            userId
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          RETURNING *;
+        `,
+        [
+          contact.contactid,
+          contact.email,
+          contact.number,
+          contact.space,
+          contact.nickname,
+          contact.address,
+          contact.website,
+          contact.avatar,
+          true,
+          user.userId,
+        ]
+      );
+
+      if (!newContactInDB.rows.length > 0) {
+        ResHdlr.srvErr(res, "We could not save your contact right now");
+        return;
+      }
+
+      ResHdlr.sucCreate(res, "Successfully saved your new contact", {
+        newContactInDB,
+      });
+    } catch (err) {
+      console.log(err);
+      ResHdlr.qryErr(res, err);
+      return;
+    }
+  } catch (err) {
+    console.log(err);
+    ResHdlr.conErr(res, err, "addContact");
+    return;
+  } finally {
+    if (clientCon) {
+      clientCon.release();
+    }
+  }
+};
+
 export const getAllContacts = async (req, res) => {
   const user = req.user;
   if (!user) {
