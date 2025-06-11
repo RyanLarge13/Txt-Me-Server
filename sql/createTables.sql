@@ -5,7 +5,7 @@ CREATE TABLE
         password VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        phoneNumber INT NOT NULL
+        phoneNumber VARCHAR() NOT NULL
     );
 
 CREATE TABLE
@@ -13,7 +13,7 @@ CREATE TABLE
         contactId VARCHAR(255) PRIMARY KEY NOT NULL,
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
-        number INT NOT NULL,
+        number VARCHAR(255) NOT NULL,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         space VARCHAR(255) DEFAULT 'primary',
         nickname VARCHAR(255),
@@ -21,7 +21,7 @@ CREATE TABLE
         website VARCHAR(255),
         avatar VARCHAR(255),
         synced BOOLEAN DEFAULT false,
-        userId INT NOT NULL,
+        userId VARCHAR(255) NOT NULL,
         FOREIGN KEY (userId) REFERENCES Users (userId)
     );
 
@@ -35,8 +35,8 @@ CREATE TABLE
         deliveredAt TIMESTAMP,
         read BOOLEAN DEFAULT false,
         readAt TIMESTAMP,
-        fromId INT NOT NULL,
-        toId INT NOT NULL,
+        fromId VARCHAR(255) NOT NULL,
+        toId VARCHAR(255) NOT NULL,
         FOREIGN KEY (fromId) REFERENCES Users (userId),
         FOREIGN KEY (toId) REFERENCES Users (userId)
     );
