@@ -5,7 +5,15 @@ CREATE TABLE
         password VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        phoneNumber VARCHAR(255) NOT NULL
+        phoneNumber VARCHAR(15) NOT NULL UNIQUE,
+        passemailcode VARCHAR(6),
+        passEmailExpiresAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        passEmailUsed BOOLEAN,
+        passcode VARCHAR(6),
+        passExpiresAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        passUsed BOOLEAN,
+        verifiedPhone BOOLEAN NOT NULL DEFAULT false,
+        verifiedEmail BOOLEAN NOT NULL DEFAULT false
     );
 
 CREATE TABLE
@@ -13,7 +21,7 @@ CREATE TABLE
         contactId VARCHAR(255) PRIMARY KEY NOT NULL,
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
-        number VARCHAR(255) NOT NULL,
+        number VARCHAR(15) NOT NULL UNIQUE,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         space VARCHAR(255) DEFAULT 'primary',
         nickname VARCHAR(255),
@@ -37,6 +45,10 @@ CREATE TABLE
         readAt TIMESTAMP,
         fromId VARCHAR(255) NOT NULL,
         toId VARCHAR(255) NOT NULL,
+        fromNumber VARCHAR(15) NOT NULL,
+        toNumber VARCHAR(15) NOT NULL,
+        FOREIGN KEY (fromNumber) REFERENCES Users (phoneNumber),
+        FOREIGN KEY (toNumber) REFERENCES Users (phoneNumber),
         FOREIGN KEY (fromId) REFERENCES Users (userId),
         FOREIGN KEY (toId) REFERENCES Users (userId)
     );
