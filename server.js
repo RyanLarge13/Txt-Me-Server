@@ -68,7 +68,13 @@ const InMem_StoreMessage = (clientMessage) => {
   }
 };
 
-const DB_SaveMessages = () => {
+const DB_SaveMessages = (socketNumber) => {
+  /*
+    NOTE:
+      When updating you can trigger the in memory did sync value to true
+      so next DB update call you only need to upload the non synced messages
+      to the DB
+  */
   // Save messages in the database
 };
 
@@ -86,39 +92,42 @@ const Socket_NewConnection = (socket) => {
 };
 
 const Socket_NewTextMessage = (clientMessage) => {
-  console.log(clientMessage);
   if (!clientMessage) {
     console.log("No message sent from client");
   }
 
   const clientToSendTo = clients.get(clientMessage.tonumber);
+  const sender = clients.get(clientMessage.fromnumber);
 
   // Validate the client message
   // Check for back html, etc...
   // Check for bad information that should not be there
   if (clientToSendTo) {
-    console.log(clientToSendTo);
-    console.log("Sending to frontend");
     try {
       io.to(clientToSendTo).emit("text-message", clientMessage);
       InMem_StoreMessage(clientMessage);
-      console.log("Message to front end sent");
+      io.to(sender).emit(`update-${clientMessage.messageid}`, {
+        delivered: true,
+        time: new Date(),
+      });
     } catch (err) {
       console.log(
         `Error emitting socket message from the server to client. Error: ${err}`
       );
+      io.to(sender).emit("delivery-error", "Failed to send message");
     }
     // Send message to DB
   } else {
     // Send error back to sender
-    console.log("no client to send to");
+    console.log("No client to send to");
+    InMem_StoreMessage(clientMessage);
   }
 };
 
 const Socket_Disconnect = (socket) => {
   console.log("Client disconnected");
   clients.delete(socket.number);
-  DB_SaveMessages();
+  DB_SaveMessages(socket.number);
   /*
     TODO:
       IMPLEMENT:
