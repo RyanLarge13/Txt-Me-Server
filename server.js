@@ -106,7 +106,9 @@ const Socket_NewTextMessage = (clientMessage) => {
     try {
       io.to(clientToSendTo).emit("text-message", clientMessage);
       InMem_StoreMessage(clientMessage);
-      io.to(sender).emit(`update-${clientMessage.messageid}`, {
+      io.to(sender).emit(`message-update`, {
+        id: clientMessage.messageid,
+        sessionNumber: clientMessage.tonumber,
         delivered: true,
         time: new Date(),
       });
@@ -114,7 +116,11 @@ const Socket_NewTextMessage = (clientMessage) => {
       console.log(
         `Error emitting socket message from the server to client. Error: ${err}`
       );
-      io.to(sender).emit("delivery-error", "Failed to send message");
+      io.to(sender).emit("delivery-error", {
+        messageid: clientMessage.messageid,
+        reason: "Message failed to send",
+        sessionNumber: clientMessage.tonumber,
+      });
     }
     // Send message to DB
   } else {
