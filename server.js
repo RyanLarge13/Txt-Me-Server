@@ -68,15 +68,7 @@ const InMem_StoreMessage = (clientMessage) => {
   }
 };
 
-const DB_SaveMessages = (socketNumber) => {
-  /*
-    NOTE:
-      When updating you can trigger the in memory did sync value to true
-      so next DB update call you only need to upload the non synced messages
-      to the DB
-  */
-  // Save messages in the database
-};
+const DB_SaveMessages = (socketNumber) => {};
 
 const Socket_NewConnection = (socket) => {
   const number = socket.handshake.query.number;
