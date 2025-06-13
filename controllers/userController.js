@@ -120,6 +120,62 @@ export const getAllContacts = async (req, res) => {
   }
 };
 
+export const deleteContact = async (req, res) => {
+  const user = req.user;
+
+  if (!user) {
+    ResHdlr.srvErr(res, "You are not authorized to delete this contact");
+    return;
+  }
+
+  const contactid = req.params.contactid;
+
+  /*
+    TODO:
+      IMPLEMENT:
+        1. contactid must be validated right here
+  */
+  if (!contactid) {
+    ResHdlr.badReq(res, "Please select a valid contact to delete");
+  }
+
+  let clientCon;
+
+  try {
+    clientCon = await client.connect();
+
+    try {
+      const query = await clientCon.query(
+        `
+          DELETE FROM Contacts
+          WHERE contactId = $1 AND userId = $2
+          RETURNING *;
+        `,
+        [contactid, user.userId]
+      );
+
+      if (query.rows.length < 1) {
+        ResHdlr.qryErr(
+          res,
+          "No contact was found to delete in your address book"
+        );
+        return;
+      }
+
+      ResHdlr.sucRes(res, "Contact removed from your address book", {});
+    } catch (err) {
+      console.log(err);
+    }
+  } catch (err) {
+    console.log(err);
+    ResHdlr.conErr(res, err, "deleteContact");
+  } finally {
+    if (clientCon) {
+      clientCon.release();
+    }
+  }
+};
+
 export const getAllMessages = async (req, res) => {
   const user = req.user;
   if (!user) {
