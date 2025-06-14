@@ -83,6 +83,15 @@ const Socket_NewConnection = (socket) => {
   socket.on("disconnect", () => Socket_Disconnect(socket));
 };
 
+/*
+  TODO:
+    IMPLEMENT:
+      1. Make you you update delivery regardless of if there
+      is a client of not to send to. You will be sending the messages
+      via push notification regardless of if they are currently
+      online or not and unless that fails AND there is no clientToSendTo
+      we should consider it delivered. Otherwise a failure to deliver???
+*/
 const Socket_NewTextMessage = (clientMessage) => {
   if (!clientMessage) {
     console.log("No message sent from client");
