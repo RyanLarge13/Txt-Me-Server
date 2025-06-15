@@ -86,6 +86,68 @@ export const addContact = async (req, res) => {
   }
 };
 
+export const updateContact = async (req, res) => {
+  const user = req.user;
+
+  if (!user) {
+    ResHdlr.authErr(res, "You cannot update this contact. Please login");
+    return;
+  }
+
+  const contact = req.body;
+
+  if (!contact) {
+    ResHdlr.badReq(res, "Please provide a contact to update");
+    return;
+  }
+
+  let clientCon;
+
+  try {
+    clientCon = await client.connect();
+
+    try {
+      const query = await clientCon.query(
+        `
+          UPDATE Contacts
+          SET 
+            name = $3, email = $4, number = $5, space = $6, nickname = $7, address = $8, website = $9
+          WHERE contactId = $1 AND userId = $2
+          RETURNING *;
+        `,
+        [
+          contact.contactid,
+          user.userId,
+          contact.name,
+          contact.email,
+          contact.number,
+          contact.space,
+          contact.nickname,
+          contact.address,
+          contact.website,
+        ]
+      );
+
+      if (query.rows.length < 1) {
+        ResHdlr.qryErr(res, "Failed to update contact on server");
+        return;
+      }
+
+      ResHdlr.sucRes(res, "Successfully updated your contact on the server", {
+        contact: query.rows[0],
+      });
+    } catch (err) {
+      console.log(err);
+      ResHdlr.qryErr(res, `Error executing query: ${err}`);
+    }
+  } catch (err) {
+    console.log(err);
+    ResHdlr.conErr(res, err, "updateContact");
+  } finally {
+    clientCon.release();
+  }
+};
+
 export const getAllContacts = async (req, res) => {
   const user = req.user;
   if (!user) {

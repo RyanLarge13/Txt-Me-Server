@@ -6,11 +6,13 @@ import {
   getAllMessages,
   getConversationByUser,
   deleteContact,
+  updateContact,
 } from "../controllers/userController.js";
 
 const UserRouter = express.Router();
 
 UserRouter.get("/contacts", auth, getAllContacts);
+UserRouter.put("/contacts/update", auth, updateContact);
 UserRouter.get("/contacts/delete/:contactid", auth, deleteContact);
 UserRouter.post("/contacts/new", auth, addContact);
 UserRouter.get("/messages", auth, getAllMessages);
