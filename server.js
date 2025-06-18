@@ -8,6 +8,7 @@ import UserRouter from "./routes/userRouter.js";
 import MessageRouter from "./routes/messageRouter.js";
 import { Server } from "socket.io";
 import cors from "cors";
+import webpush from "web-push";
 import dotenv from "dotenv";
 import client from "./utils/client.js";
 dotenv.config();
@@ -16,8 +17,18 @@ const PORT = process.env.PORT || 8080;
 const app = express();
 const server = http.createServer(app);
 
+const PUBLIC_VAPID_KEY = process.env.WEB_PUSH_VAPID_PUBLIC_KEY;
+const PRIVATE_VAPID_KEY = process.env.WEB_PUSH_VAPID_PRIVATE_KEY;
+
+webpush.setVapidDetails(
+  "mailto:ryanlarge@ryanlarge.dev",
+  PUBLIC_VAPID_KEY,
+  PRIVATE_VAPID_KEY
+);
+
 const clients = new Map();
 const messages = new Map();
+const subscriptions = new Map();
 
 app.use(cors());
 app.use(parser.json({ urlencoded: true }));
@@ -70,12 +81,50 @@ const InMem_StoreMessage = (clientMessage) => {
 
 const DB_SaveMessages = (socketNumber) => {};
 
+const sendPushNotification = (clientMessage) => {
+  if (subscriptions.has(clientMessage.tonumber)) {
+    const subs = subscriptions.get(clientMessage.tonumber);
+
+    const payload = {
+      // Add a toname from the frontend
+      title: clientMessage.toname,
+      body: clientMessage.message,
+    };
+    subs.forEach(async (s) => {
+      try {
+        await webpush.sendNotification(s, payload);
+      } catch (err) {
+        console.log("Error sending web push to client");
+
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          const newSubs = subs.filter((_s) => _s.endpoint !== s.endpoint);
+
+          subscriptions.set(clientMessage.tonumber, newSubs);
+        }
+      }
+    });
+  }
+};
+
+const subscribeClient = (subscribeInfo) => {
+  if (subscriptions.has(subscribeInfo.number)) {
+    subscriptions.get(subscribeInfo.number).push(subscribeInfo.subscription);
+  } else {
+    subscriptions.set(subscribeInfo.number, [subscribeInfo.subscription]);
+  }
+};
+
 const Socket_NewConnection = (socket) => {
   const number = socket.handshake.query.number;
+  const subscribeInfo = socket.handshake.query.subscribeInfo;
   console.log("New Connection");
 
   // Do not check if client already exists. Instead create or update always on every connection
   clients.set(number, socket.id);
+
+  if (subscribeInfo.newClient) {
+    subscribeClient(subscribeInfo);
+  }
 
   // Set this number a tracking data for when a client goes to disconnect
   socket.number = number;
@@ -94,6 +143,7 @@ const Socket_NewTextMessage = (clientMessage) => {
   // Validate the client message
   // Check for back html, etc...
   // Check for bad information that should not be there
+
   if (clientToSendTo) {
     try {
       io.to(clientToSendTo).emit("text-message", clientMessage);
@@ -120,6 +170,8 @@ const Socket_NewTextMessage = (clientMessage) => {
     console.log("No client to send to");
     InMem_StoreMessage(clientMessage);
   }
+
+  sendPushNotification(clientMessage);
 };
 
 const Socket_Disconnect = (socket) => {
