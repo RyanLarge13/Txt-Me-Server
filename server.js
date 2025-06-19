@@ -156,13 +156,6 @@ const Socket_NewTextMessage = (clientMessage) => {
   if (clientToSendTo) {
     try {
       io.to(clientToSendTo).emit("text-message", clientMessage);
-      InMem_StoreMessage(clientMessage);
-      io.to(sender).emit(`message-update`, {
-        id: clientMessage.messageid,
-        sessionNumber: clientMessage.tonumber,
-        delivered: true,
-        time: new Date(),
-      });
     } catch (err) {
       console.log(
         `Error emitting socket message from the server to client. Error: ${err}`
@@ -172,15 +165,44 @@ const Socket_NewTextMessage = (clientMessage) => {
         reason: "Message failed to send",
         sessionNumber: clientMessage.tonumber,
       });
+      return;
     }
+
+    try {
+      io.to(sender).emit(`message-update`, {
+        id: clientMessage.messageid,
+        sessionNumber: clientMessage.tonumber,
+        delivered: true,
+        time: new Date(),
+      });
+    } catch (err) {
+      console.log(
+        "Error when sending message update to client with clientToSendTo",
+        err
+      );
+    }
+    sendPushNotification(clientMessage);
+    InMem_StoreMessage(clientMessage);
     // Send message to DB
   } else {
     // Send error back to sender
     console.log("No client to send to");
+    try {
+      io.to(sender).emit(`message-update`, {
+        id: clientMessage.messageid,
+        sessionNumber: clientMessage.tonumber,
+        delivered: true,
+        time: new Date(),
+      });
+    } catch (err) {
+      console.log(
+        "Error when sending message update to client when no clientToSendTo",
+        err
+      );
+    }
+    sendPushNotification(clientMessage);
     InMem_StoreMessage(clientMessage);
   }
-
-  sendPushNotification(clientMessage);
 };
 
 const Socket_Disconnect = (socket) => {
