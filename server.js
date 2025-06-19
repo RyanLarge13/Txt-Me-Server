@@ -112,6 +112,15 @@ const subscribeClient = (subscribeInfo) => {
   } else {
     subscriptions.set(subscribeInfo.number, [subscribeInfo.subscription]);
   }
+
+  const sender = clients.get(subscribeInfo.number);
+
+  // Let the frontend know they have successfully been subscribed and their subscription is saved in memory
+  io.to(sender).emit("web-push-sub-success", {
+    message: "Server: Successfully subscribed to push notifications!!!",
+    subscribed: true,
+    subscription: subscribeInfo.subscription,
+  });
 };
 
 const Socket_NewConnection = (socket) => {
