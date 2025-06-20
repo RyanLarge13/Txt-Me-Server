@@ -83,6 +83,7 @@ const DB_SaveMessages = (socketNumber) => {};
 
 const sendPushNotification = (clientMessage) => {
   if (subscriptions.has(clientMessage.tonumber)) {
+    console.log("subscription found for client in subscription map");
     const subs = subscriptions.get(clientMessage.tonumber);
 
     const payload = {
@@ -92,6 +93,7 @@ const sendPushNotification = (clientMessage) => {
     };
     subs.forEach(async (s) => {
       try {
+        console.log("Sending web push to client", clientMessage.tonumber);
         await webpush.sendNotification(s, payload);
       } catch (err) {
         console.log("Error sending web push to client");
@@ -103,10 +105,13 @@ const sendPushNotification = (clientMessage) => {
         }
       }
     });
+  } else {
+    console.log("subscriptions do not have this client", clientMessage);
   }
 };
 
 const subscribeClient = (subscribeInfo) => {
+  console.log("Subscribing client to web push notifications");
   if (subscriptions.has(subscribeInfo.number)) {
     subscriptions.get(subscribeInfo.number).push(subscribeInfo.subscription);
   } else {
@@ -115,12 +120,22 @@ const subscribeClient = (subscribeInfo) => {
 
   const sender = clients.get(subscribeInfo.number);
 
+  if (!sender) {
+    console.log(
+      "Sender must have logged off after trying to subscribe to web push notifications. No sender to send web-push-success too"
+    );
+  }
+
   // Let the frontend know they have successfully been subscribed and their subscription is saved in memory
   io.to(sender).emit("web-push-sub-success", {
     message: "Server: Successfully subscribed to push notifications!!!",
     subscribed: true,
     subscription: subscribeInfo.subscription,
   });
+
+  console.log(
+    "Ping sent to client for successful subscription to web push on server"
+  );
 };
 
 const Socket_NewConnection = (socket) => {
@@ -145,6 +160,7 @@ const Socket_NewConnection = (socket) => {
 const Socket_NewTextMessage = (clientMessage) => {
   if (!clientMessage) {
     console.log("No message sent from client");
+    return;
   }
 
   const clientToSendTo = clients.get(clientMessage.tonumber);
@@ -176,6 +192,8 @@ const Socket_NewTextMessage = (clientMessage) => {
         delivered: true,
         time: new Date(),
       });
+
+      console.log("Ping sent to sender updating delivered at values");
     } catch (err) {
       console.log(
         "Error when sending message update to client with clientToSendTo",
@@ -217,18 +235,18 @@ const Socket_Disconnect = (socket) => {
   */
 };
 
-io.on("connection", Socket_NewConnection);
-
-server.listen(PORT, "0.0.0.0", async () => {
-  console.log("Server running on port 8080");
-});
-
 const Socket_ReadMessages = (fromNumber) => {
+  console.log(
+    "Socket got a ping to send messages read to a client",
+    fromNumber
+  );
   if (clients.has(fromNumber)) {
+    console.log("Client exists to send 'messages read' ping");
     const client = clients.get(fromNumber);
 
     try {
       io.to(client).emit("messages-read", fromNumber);
+      console.log("Ping sent to client to update messages read");
     } catch (err) {
       console.log(
         "Error sending messages-read trigger to client. Error: ",
@@ -237,5 +255,12 @@ const Socket_ReadMessages = (fromNumber) => {
     }
   } else {
     // Send web push and talk with the service worker maybe? Or update local messages
+    console.log("No client to send ping that messages were read");
   }
 };
+
+io.on("connection", Socket_NewConnection);
+
+server.listen(PORT, "0.0.0.0", async () => {
+  console.log("Server running on port 8080");
+});
