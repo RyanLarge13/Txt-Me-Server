@@ -138,6 +138,7 @@ const Socket_NewConnection = (socket) => {
   // Set this number a tracking data for when a client goes to disconnect
   socket.number = number;
   socket.on("text-message", Socket_NewTextMessage);
+  socket.on("messages-read", Socket_ReadMessages);
   socket.on("disconnect", () => Socket_Disconnect(socket));
 };
 
@@ -221,3 +222,20 @@ io.on("connection", Socket_NewConnection);
 server.listen(PORT, "0.0.0.0", async () => {
   console.log("Server running on port 8080");
 });
+
+const Socket_ReadMessages = (fromNumber) => {
+  if (clients.has(fromNumber)) {
+    const client = clients.get(fromNumber);
+
+    try {
+      io.to(client).emit("messages-read", fromNumber);
+    } catch (err) {
+      console.log(
+        "Error sending messages-read trigger to client. Error: ",
+        err
+      );
+    }
+  } else {
+    // Send web push and talk with the service worker maybe? Or update local messages
+  }
+};
