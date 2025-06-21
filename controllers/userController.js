@@ -164,7 +164,7 @@ export const deleteContact = async (req, res) => {
 
       ResHdlr.sucRes(res, "Contact removed from your address book", {});
     } catch (err) {
-      console.log(err);
+      console.log("Server error deleting contact", err);
     }
   } catch (err) {
     console.log(err);
@@ -181,8 +181,11 @@ export const getAllMessages = async (req, res) => {
   if (!user) {
     return ResHdlr.authErr(res, "We could not access your messages");
   }
+
+  let clientCon;
+
   try {
-    const clientCon = await client.connect();
+    clientCon = await client.connect();
     try {
       const allMessages = await clientCon.query(
         `
@@ -191,16 +194,21 @@ export const getAllMessages = async (req, res) => {
    `,
         [user.userId]
       );
-      return ResHdlr.sucRes(res, "Successfully retrieved messages", {
+      ResHdlr.sucRes(res, "Successfully retrieved messages", {
         messages: allMessages.rows,
       });
+      return;
     } catch (err) {
       console.log(err);
-      return ResHdlr.qryErr(res, err);
+      ResHdlr.qryErr(res, err);
+      return;
     }
   } catch (err) {
     console.log(err);
-    return ResHdlr.conErr(res, err, "getAllContacts");
+    ResHdlr.conErr(res, err, "getAllContacts");
+    return;
+  } finally {
+    clientCon.release();
   }
 };
 
@@ -213,8 +221,11 @@ export const getConversationByUser = async (req, res) => {
   if (!otherUserId) {
     return ResHdlr.authErr(res, "You have no messages to or from this person");
   }
+
+  let clientCon;
+
   try {
-    const clientCon = await client.connect();
+    clientCon = await client.connect();
     try {
       const allMessages = await clientCon.query(
         `
@@ -233,6 +244,8 @@ export const getConversationByUser = async (req, res) => {
   } catch (err) {
     console.log(err);
     return ResHdlr.conErr(res, err, "getAllContacts");
+  } finally {
+    clientCon.release();
   }
 };
 

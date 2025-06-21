@@ -56,8 +56,12 @@ export const signUpReg = async (req, res) => {
       "We take the security of your information, conversations and your other data very seriously and take pride in making sure you are safe, you must enter a password with these rules"
     );
   }
+
+  let clntCon;
+
   try {
-    const clntCon = await client.connect();
+    clntCon = await client.connect();
+
     try {
       const existingUser = await clntCon.query(
         `
@@ -114,12 +118,14 @@ export const signUpReg = async (req, res) => {
             false,
           ]
         );
+
         if (newUser.rows.length < 1) {
           return ResHdlr.srvErr(
             res,
             "We cannot create a new account at this moment. More than likely there is an important security update on our servers right now. Please try to create a new account later and if the issue persists, contact the developer at"
           );
         }
+
         const dbUser = newUser.rows[0];
         const token = signToken({
           username: dbUser.username,
@@ -141,6 +147,7 @@ export const signUpReg = async (req, res) => {
           ],
           email
         );
+
         mailer.sendEmail("Verify Your Email");
         console.log(txtSentRes);
         return ResHdlr.sucCreate(
@@ -153,14 +160,12 @@ export const signUpReg = async (req, res) => {
       }
     } catch (err) {
       console.log(err);
-      client.end();
       return ResHdlr.qryErr(res, err);
     }
   } catch (err) {
     console.log(err);
-    client.end();
     return ResHdlr.conErr(res, err, "Sign up");
   } finally {
-    client.release();
+    clntCon.release();
   }
 };

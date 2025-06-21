@@ -80,8 +80,11 @@ export const verifyPinEmail = async (req, res) => {
       "Please provide a valid pin sent to your email for login. This will be a 6 digit randomized pin code."
     );
   }
+
+  let clntCon;
+
   try {
-    const clntCon = await client.connect();
+    clntCon = await client.connect();
     try {
       const userExists = await clntCon.query(
         `
@@ -154,6 +157,8 @@ export const verifyPinEmail = async (req, res) => {
   } catch (err) {
     console.log(err);
     return ResHdlr.conErr(res, err, "Verify pin email login");
+  } finally {
+    clntCon.release();
   }
 };
 
@@ -177,8 +182,11 @@ export const verifyPinPhone = async (req, res) => {
       "Please provide a valid pin. Check your phone for a new 6 digit pin"
     );
   }
+
+  let clntCon;
+
   try {
-    const clntCon = await client.connect();
+    clntCon = await client.connect();
     try {
       const userExists = await clntCon.query(`
      SELECT * FROM users 
@@ -246,6 +254,8 @@ export const verifyPinPhone = async (req, res) => {
   } catch (err) {
     console.log(err);
     return ResHdlr.conErr(res, err, "Verify pin login");
+  } finally {
+    clntCon.release();
   }
 };
 
@@ -258,8 +268,11 @@ export const verifyPhoneCode = async (req, res) => {
   if (!sixDigitPin || !Valdtr.valPin(sixDigitPin)) {
     return ResHdlr.badReq(res, "You must pass in a valid pin");
   }
+
+  let clntCon;
+
   try {
-    const clntCon = await client.connect();
+    clntCon = await client.connect();
     try {
       const dbUser = await clntCon.query(
         `
@@ -314,6 +327,8 @@ export const verifyPhoneCode = async (req, res) => {
   } catch (err) {
     console.log(err);
     return ResHdlr.conErr(res, err, "Verying phone number");
+  } finally {
+    clntCon.release();
   }
 };
 
@@ -329,8 +344,11 @@ export const verifyEmailCode = async (req, res) => {
   if (!emailCode || !Valdtr.valPin(emailCode)) {
     return ResHdlr.badReq(res, "Please input a valid code");
   }
+
+  let clntCon;
+
   try {
-    const clntCon = await client.connect();
+    clntCon = await client.connect();
     try {
       const dbUser = await clntCon.query(
         `
@@ -386,6 +404,8 @@ export const verifyEmailCode = async (req, res) => {
   } catch (err) {
     console.log(err);
     return ResHdlr.conErr(res, err, "Verying email");
+  } finally {
+    clntCon.release();
   }
 };
 
@@ -394,8 +414,11 @@ export const newPinEmail = async (req, res) => {
   if (!email) {
     return ResHdlr.badReq(res, "Please provide a valid email");
   }
+
+  let clntCon;
+
   try {
-    const clntCon = await client.connect();
+    clntCon = await client.connect();
     try {
       const userExists = await clntCon.query(
         `
@@ -453,6 +476,8 @@ export const newPinEmail = async (req, res) => {
   } catch (err) {
     console.log(err);
     return ResHdlr.conErr(res, err, "New Email Pin");
+  } finally {
+    clntCon.release();
   }
 };
 
@@ -467,8 +492,11 @@ export const newPinPhone = async (req, res) => {
       "Please provide a valid phone number attached to your account"
     );
   }
+
+  let clntCon;
+
   try {
-    const clntCon = await client.connect();
+    clntCon = await client.connect();
     const formattedPhoneNum = phone.replace(/[()-]/g, "");
     try {
       const userExists = await clntCon.query(
@@ -517,5 +545,7 @@ export const newPinPhone = async (req, res) => {
   } catch (err) {
     console.log(err);
     return ResHdlr.conErr(res, err, "New Email Pin");
+  } finally {
+    clntCon.release();
   }
 };
