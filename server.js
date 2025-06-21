@@ -157,7 +157,7 @@ const Socket_NewConnection = (socket) => {
   socket.on("disconnect", () => Socket_Disconnect(socket));
 };
 
-const Socket_NewTextMessage = (clientMessage) => {
+const Socket_NewTextMessage = async (clientMessage) => {
   if (!clientMessage) {
     console.log("No message sent from client");
     return;
