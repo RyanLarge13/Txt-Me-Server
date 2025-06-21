@@ -181,6 +181,8 @@ const Socket_FetchLatestMessages = (clientInfo) => {
     return;
   }
 
+  const updates = [];
+
   sessionNumbers.forEach((n) => {
     const mapKey = M_GetMapKey(clientNumber, n.number);
 
@@ -197,13 +199,17 @@ const Socket_FetchLatestMessages = (clientInfo) => {
       );
 
       if (filteredMessagesByDate > 0) {
-        io.to(clientToSendTo).emit("ping-latest-messages", {
+        updates.push({
           sessionNumber: n.number,
           messages: filteredMessagesByDate,
         });
       }
     }
   });
+
+  if (updates.length > 0) {
+    io.to(clientToSendTo).emit("ping-latest-messages", updates);
+  }
 };
 
 const Socket_NewTextMessage = async (clientMessage) => {
