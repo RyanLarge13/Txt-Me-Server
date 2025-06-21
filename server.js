@@ -48,6 +48,14 @@ const io = new Server(server, {
   },
 });
 
+const M_GetMapKey = (to, from) => {
+  const greaterThan = to > from;
+
+  const mapKey = `${greaterThan ? to : from}-${greaterThan ? from : to}`;
+
+  return mapKey;
+};
+
 const InMem_StoreMessage = (clientMessage) => {
   /*
  type Message = {
@@ -68,9 +76,7 @@ const InMem_StoreMessage = (clientMessage) => {
   const to = clientMessage.tonumber;
   const from = clientMessage.fromnumber;
 
-  const greaterThan = to > from;
-
-  const mapKey = `${greaterThan ? to : from}-${greaterThan ? from : to}`;
+  const mapKey = M_GetMapKey(to, from);
 
   if (!messages.has(mapKey)) {
     messages.set(mapKey, [clientMessage]);
@@ -155,6 +161,49 @@ const Socket_NewConnection = (socket) => {
   socket.on("text-message", Socket_NewTextMessage);
   socket.on("messages-read", Socket_ReadMessages);
   socket.on("disconnect", () => Socket_Disconnect(socket));
+  socket.on("query-latest-messages", Socket_FetchLatestMessages);
+};
+
+const Socket_FetchLatestMessages = (clientInfo) => {
+  const { clientNumber, sessionNumbers } = clientInfo;
+
+  const clientToSendTo = clients.get(clientNumber);
+
+  if (sessionNumbers.length < 1) {
+    return;
+  }
+
+  if (!clientNumber) {
+    return;
+  }
+
+  if (!clientToSendTo) {
+    return;
+  }
+
+  sessionNumbers.forEach((n) => {
+    const mapKey = M_GetMapKey(clientNumber, n.number);
+
+    /*
+      NOTE:
+        Only do stuff if the messages exist and the array returns more than
+        nothing
+    */
+    if (messages.has(mapKey)) {
+      const messages = messages.get(mapKey);
+
+      const filteredMessagesByDate = messages.filter(
+        (m) => m.sentat > n.latestDate
+      );
+
+      if (filteredMessagesByDate > 0) {
+        io.to(clientToSendTo).emit("ping-latest-messages", {
+          sessionNumber: n.number,
+          messages: filteredMessagesByDate,
+        });
+      }
+    }
+  });
 };
 
 const Socket_NewTextMessage = async (clientMessage) => {
