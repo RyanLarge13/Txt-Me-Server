@@ -10,6 +10,7 @@ import {
   getDateInFuture,
   hoursMinutesInFuture,
 } from "../utils/helpers.js";
+import { randomUUID } from "crypto";
 
 export const signUpReg = async (req, res) => {
   const { username, email, password, phone } = req.body.newUser;
@@ -100,12 +101,13 @@ export const signUpReg = async (req, res) => {
       try {
         const newUser = await client.query(
           `
-    INSERT INTO Users(username, email, password, phoneNumber, passcode,
+    INSERT INTO Users(userId, username, email, password, phoneNumber, passcode,
     passExpiresAt, passused, passemailcode, passEmailExpiresAt, passemailused)
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING *;
     `,
           [
+            randomUUID(),
             username,
             email,
             hashedPass,
